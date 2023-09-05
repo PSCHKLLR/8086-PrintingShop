@@ -164,8 +164,8 @@ printRM macro ringgit, cent
     add ah, '0'
     mov bl, al
     mov cl, ah
-    putc cl
     putc bl
+    putc cl
 
     mov ax, rem1
     mov dx, 0
@@ -266,7 +266,7 @@ main proc
     call cls
 
     ;---------- < Test Only >-------------
-    mov ax, 12
+    mov ax, 5450
     mov si, 0
     mov paperA4[si], ax
     mov si, 2
@@ -304,474 +304,487 @@ main proc
     ;-----------------< Print Reciept >----------------
     jmp reciept
     parseInt:
-    xor ax, ax
-    xor cx, cx
+        xor ax, ax
+        xor cx, cx
+        mov si, 2
+        mov di, 0
+        n:
+            mov al, pay[si]
+            cmp al, 2eh
+            je dot
 
-    mov si, 2
-    mov di, 0
-    n:
-    mov al, pay[si]
-    cmp al, 2eh
-    je dot
+            cmp al, 13
+            jne firstR
+            jmp balance
 
-    cmp al, 13
-    jne firstR
-    jmp balance
+        firstR:
+            cmp di, 0
+            jne nR
 
-    firstR:
-    cmp di, 0
-    jne nR
-
-    sub al, '0'
-    mov bl, 1
-    mul bl
-    mov cashRinggit, ax
-    inc si
-    inc di
-    jmp n
+            sub al, '0'
+            mov bl, 1
+            mul bl
+            mov cashRinggit, ax
+            inc si
+            inc di
+        jmp n
     
-    nR:
-    mov ax, cashRinggit
-    mov bx, 10
-    mul bx
-    mov bx, 1
-    div bx
-    mov cx, ax
+        nR:
+            mov ax, cashRinggit
+            mov bx, 10
+            mul bx
+            mov cx, 1
+            div cx
+            mov cx, ax
 
-    xor ax, ax
+            xor ax, ax
 
-    mov al, pay[si]
-    sub al, '0'
-    mov bl, 1
-    mul bl
+            mov al, pay[si]
+            sub al, '0'
+            mov bl, 1
+            mul bl
 
-    add ax, cx
-    mov cashRinggit, ax
-    inc si
-    jmp n
+            add cx, ax
+            mov cashRinggit, cx
+            inc si
+        jmp n
 
-    dot:
-    inc si
-    jmp lower
+        dot:
+            inc si
+            mov di, 0
+        jmp lower
 
-    lower:
-    mov al, pay[si]
-    cmp al, 13
-    jne firstC
-    jmp balance
+        lower:
+            mov al, pay[si]
+            cmp al, 13
+            jne firstC
+        jmp balance
 
-    firstC:
-    cmp di, 0
-    jne nC
+        firstC:
+            cmp di, 0
+            jne secondC
 
-    sub al, '0'
-    mov bl, 1
-    mul bl
-    mov cashCent, ax
-    inc si
-    inc di
-    jmp lower
+            sub al, '0'
+            mov bl, 100
+            mul bl
+            mov cashCent, ax
+            inc si
+            inc di
+        jmp lower
     
-    nC:
-    mov ax, cashCent
-    mov bx, 10
-    mul bx
-    mov bx, 1
-    div bx
-    mov cx, ax
+        secondC:
+            cmp di, 1
+            jne thirdC
 
-    xor ax, ax
+            mov al, pay[si]
+            sub al, '0'
+            mov bl, 10
+            mul bl
+            add ax, cashCent
+            mov cashCent, ax
+            inc si
+            inc di
+        jmp lower
 
-    mov al, pay[si]
-    sub al, '0'
-    mov bl, 1
-    mul bl
+        thirdC:
+            mov al, pay[si]
+            sub al, '0'
+            mov bl, 1
+            mul bl
+            add ax, cashCent
+            mov cashCent, ax
+            inc si
+            inc di
+        jmp lower
 
-    add ax, cx
-    mov cashCent, ax
-    inc si
-    jmp lower
-    
     reciept:
-    putc 9
-    putc 9
-    print name1
-    putc 10
-    print line
-    putc 10
-    mov di, 0
-    mov ax, paperA4[di]
-    cmp ax, 0
-    ja A40
-    jmp A41
+        putc 9
+        putc 9
+        print name1
+        putc 10
+        print line
+        putc 10
+        mov di, 0
+        mov ax, paperA4[di]
+        cmp ax, 0
+        ja A40
+        jmp A41
 
-    A40:
-    mov si, 0
-    paperNo paperA4[si]
-    putc 32
-    print A4
-    print bw
-    print printing
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        A40:
+            mov si, 0
+            paperNo paperA4[si]
+            putc 32
+            print A4
+            print bw
+            print printing
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A41:
-    mov si, 2
-    mov ax, paperA4[si]
-    cmp ax, 0
-    ja a411
-    jmp A42
+        A41:
+            mov si, 2
+            mov ax, paperA4[si]
+            cmp ax, 0
+            ja a411
+        jmp A42
 
-    a411:
-    paperNo paperA4[si]
-    putc 32
-    print A4
-    print color
-    print printing
-    print space
-    printRM ringgit[si], cent[si]
-    putc 10
+        a411:
+            paperNo paperA4[si]
+            putc 32
+            print A4
+            print color
+            print printing
+            print space
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A42:
-    mov si, 4
-    mov ax, paperA4[si]
-    cmp ax, 0
-    ja a421
-    jmp A43
+        A42:
+            mov si, 4
+            mov ax, paperA4[si]
+            cmp ax, 0
+            ja a421
+        jmp A43
 
-    a421:
-    paperNo paperA4[si]
-    putc 32
-    print A4
-    print bw
-    print photo
-    print doubleTab
-    printRM ringgit[si], cent[si]
-    putc 10
-
-
-    A43:
-    mov si, 6
-    mov ax, paperA4[si]
-    cmp ax, 0
-    ja a431
-    jmp A31
-
-    a431:
-    paperNo paperA4[si]
-    putc 32
-    print A4
-    print color
-    print photo
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
-
-    A31:
-    mov di, 0
-    mov ax, paperA3[di]
-    cmp ax, 0
-    ja a311
-    jmp A32
-
-    a311:
-    mov si, 8
-    paperNo paperA3[di]
-    putc 32
-    print A3
-    print bw
-    print printing
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a421:
+            paperNo paperA4[si]
+            putc 32
+            print A4
+            print bw
+            print photo
+            print doubleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
 
-    A32:
-    mov di, 2
-    mov ax, paperA3[di]
-    cmp ax, 0
-    ja a321
-    jmp A33
+        A43:
+            mov si, 6
+            mov ax, paperA4[si]
+            cmp ax, 0
+            ja a431
+        jmp A31
 
-    a321:
-    mov si, 10
-    paperNo paperA3[di]
-    putc 32
-    print A3
-    print color
-    print printing
-    print space
-    printRM ringgit[si], cent[si]
-    putc 10
+        a431:
+            paperNo paperA4[si]
+            putc 32
+            print A4
+            print color
+            print photo
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A33:
-    mov di, 4
-    mov ax, paperA3[di]
-    cmp ax, 0
-    ja a331
-    jmp A34
+        A31:
+            mov di, 0
+            mov ax, paperA3[di]
+            cmp ax, 0
+            ja a311
+        jmp A32
 
-    a331:
-    mov si, 12
-    paperNo paperA3[di]
-    putc 32
-    print A3
-    print bw
-    print photo
-    print doubleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a311:
+            mov si, 8
+            paperNo paperA3[di]
+            putc 32
+            print A3
+            print bw
+            print printing
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A34:
-    mov di, 6
-    mov ax, paperA3[di]
-    cmp ax, 0
-    ja a341
-    jmp A21
+        A32:
+            mov di, 2
+            mov ax, paperA3[di]
+            cmp ax, 0
+            ja a321
+        jmp A33
 
-    a341:
-    mov si, 14
-    paperNo paperA3[di]
-    putc 32
-    print A3
-    print color
-    print photo
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a321:
+            mov si, 10
+            paperNo paperA3[di]
+            putc 32
+            print A3
+            print color
+            print printing
+            print space
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A21:
-    mov di, 0
-    mov ax, paperA2[di]
-    cmp ax, 0
-    ja a211
-    jmp A22
+        A33:
+            mov di, 4
+            mov ax, paperA3[di]
+            cmp ax, 0
+            ja a331
+        jmp A34
 
-    a211:
-    mov di, 16
-    paperNo paperA2[di]
-    putc 32
-    print A2
-    print bw
-    print printing
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a331:
+            mov si, 12
+            paperNo paperA3[di]
+            putc 32
+            print A3
+            print bw
+            print photo
+            print doubleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A22:
-    mov di, 2
-    mov ax, paperA2[di]
-    cmp ax, 0
-    ja a221
-    jmp A23
+        A34:
+            mov di, 6
+            mov ax, paperA3[di]
+            cmp ax, 0
+            ja a341
+        jmp A21
 
-    a221:
-    mov si, 18
-    paperNo paperA2[di]
-    putc 32
-    print A2
-    print color
-    print printing
-    print space
-    printRM ringgit[si], cent[si]
-    putc 10
+        a341:
+            mov si, 14
+            paperNo paperA3[di]
+            putc 32
+            print A3
+            print color
+            print photo
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A23:
-    mov di, 4
-    mov ax, paperA2[di]
-    cmp ax, 0
-    ja a231
-    jmp A24
+        A21:
+            mov di, 0
+            mov ax, paperA2[di]
+            cmp ax, 0
+            ja a211
+        jmp A22
 
-    a231:
-    mov si, 20
-    paperNo paperA2[di]
-    putc 32
-    print A2
-    print bw
-    print photo
-    print doubleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a211:
+            mov si, 16
+            paperNo paperA2[di]
+            putc 32
+            print A2
+            print bw
+            print printing
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
-    A24:
-    mov di, 6
-    mov ax, paperA2[di]
-    cmp ax, 0
-    ja a241
-    jmp done
+        A22:
+            mov di, 2
+            mov ax, paperA2[di]
+            cmp ax, 0
+            ja a221
+        jmp A23
 
-    a241:
-    mov si, 22
-    paperNo paperA2[di]
-    putc 32
-    print A2
-    print color
-    print photo
-    print tripleTab
-    printRM ringgit[si], cent[si]
-    putc 10
+        a221:
+            mov si, 18
+            paperNo paperA2[di]
+            putc 32
+            print A2
+            print color
+            print printing
+            print space
+            printRM ringgit[si], cent[si]
+            putc 10
+
+        A23:
+            mov di, 4
+            mov ax, paperA2[di]
+            cmp ax, 0
+            ja a231
+        jmp A24
+
+        a231:
+            mov si, 20
+            paperNo paperA2[di]
+            putc 32
+            print A2
+            print bw
+            print photo
+            print doubleTab
+            printRM ringgit[si], cent[si]
+            putc 10
+
+        A24:
+            mov di, 6
+            mov ax, paperA2[di]
+            cmp ax, 0
+            ja a241
+        jmp done
+
+        a241:
+            mov si, 22
+            paperNo paperA2[di]
+            putc 32
+            print A2
+            print color
+            print photo
+            print tripleTab
+            printRM ringgit[si], cent[si]
+            putc 10
 
     done:
-    print line
-    putc 10
-    print subtotalStr
-    print bigspace
-    printRM subTotalRinggit, subTotalCent
+        print line
+        putc 10
+        print subtotalStr
+        print bigspace
+        printRM subTotalRinggit, subTotalCent
     jmp nodiscount
 
     pays:
     ;Total = subtotal - discount
-    putc 10
-    print discountStr
-    putc 9
-    putc 9
-    mov ax, salesPaper
-    cmp ax, 100
-    ja disSTR
+        putc 10
+        print discountStr
+        putc 9
+        putc 9
+        mov ax, salesPaper
+        cmp ax, 100
+        ja disSTR
     jmp cont
     
     disSTR:
-    cmp ax, 200
-    jbe Astr
-    jmp Bstr
+        cmp ax, 200
+        jbe Astr
+        jmp Bstr
 
     Astr:
-    print discA 
+        print discA 
     jmp cont
 
     Bstr:
-    print discB   
+        print discB   
     jmp cont
 
     cont:
-    print tripleTab
-    printRM discountRinggit, discountCent
-    putc 10
-    print line
-    putc 10
-    print totalStr
-    putc 9
-    putc 9
-    paperNo salesPaper
-    print tripleTab
-    printRM totalRinggit, totalCent
-    putc 10
-    print cashStr
-    print bigspace
-    print rm
-    input pay
-    jmp parseInt
-    mov ax, cashRinggit
-    cmp ax, totalRinggit
-    je validateCent
-    ja balance
+        print tripleTab
+        printRM discountRinggit, discountCent
+        putc 10
+        print line
+        putc 10
+        print totalStr
+        putc 9
+        putc 9
+        paperNo salesPaper
+        print tripleTab
+        printRM totalRinggit, totalCent
+        putc 10
+        print cashStr
+        print bigspace
+        print rm
+        input pay
+        jmp parseInt
+        mov ax, cashRinggit
+        cmp ax, totalRinggit
+        jmp validateCent
+        ja balance
     jmp reciept
 
     validateCent:
-    mov ax, cashCent
-    cmp ax, totalCent
-    jae balance
+        mov ax, cashCent
+        cmp ax, totalCent
+        jae balance
     jmp reciept
 
     balance:
-    putc 10
-    print changeStr
-    print bigspace
-    call return
-    printRM changeRinggit, changeCent
-    putc 10
-    print line
+        putc 10
+        print changeStr
+        print bigspace
+        ;printRM cashRinggit, cashCent
+        call return
+        printRM changeRinggit, changeCent
+        putc 10
+        print line
 
-    mov cx, 4
-    mov si, 0
-    calcdailyA4:
-    mov ax, dailyA4[si]
-    add ax, paperA4[si]
-    mov dailyA4[si], ax
-    add ax, 2
-    loop calcdailyA4
+        mov cx, 4
+        mov si, 0
+        calcdailyA4:
+            mov ax, dailyA4[si]
+            add ax, paperA4[si]
+            mov dailyA4[si], ax
+            add ax, 2
+        loop calcdailyA4
 
-    mov cx, 4
-    mov si, 0
-    calcdailyA3:
-    mov ax, dailyA3[si]
-    add ax, paperA3[si]
-    mov dailyA3[si], ax
-    add ax, 2
-    loop calcdailyA3
+        mov cx, 4
+        mov si, 0
+        calcdailyA3:
+            mov ax, dailyA3[si]
+            add ax, paperA3[si]
+            mov dailyA3[si], ax
+            add ax, 2
+        loop calcdailyA3
 
-    mov cx, 4
-    mov si, 0
-    calcdailyA2:
-    mov ax, dailyA2[si]
-    add ax, paperA2[si]
-    mov dailyA2[si], ax
-    add ax, 2
-    loop calcdailyA2
+        mov cx, 4
+        mov si, 0
+        calcdailyA2:
+            mov ax, dailyA2[si]
+            add ax, paperA2[si]
+            mov dailyA2[si], ax
+            add ax, 2
+        loop calcdailyA2
 
-    mov ax, dailyDiscountRinggit
-    add ax, discountRinggit
-    mov dailyDiscountRinggit, ax
+        mov ax, dailyDiscountRinggit
+        add ax, discountRinggit
+        mov dailyDiscountRinggit, ax
 
-    mov ax, dailyDiscountCent
-    add ax, discountCent
-    mov dailyDiscountCent, ax
+        mov ax, dailyDiscountCent
+        add ax, discountCent
+        mov dx, 0
+        mov bx, 1000
+        div bx
+        mov dx, dailyDiscountCent
+        mov cx, dailyDiscountRinggit
+        add cx, ax
+        mov dailyDiscountRinggit, cx
 
-    xor ax, ax
-    mov discountCent, ax
-    mov si, 0
-    mov paperA4[si], ax
-    mov si, 2
-    mov paperA4[si], ax
-    mov si, 4
-    mov paperA4[si], ax
-    mov si, 6
-    mov paperA4[si], ax
-    mov si, 0
-    mov paperA3[si], ax
-    mov si, 2
-    mov paperA3[si], ax
-    mov si, 4
-    mov paperA3[si], ax
-    mov si, 6
-    mov paperA3[si], ax
-    mov si, 0
-    mov paperA2[si], ax
-    mov si, 2
-    mov paperA2[si], ax
-    mov si, 4
-    mov paperA2[si], ax
-    mov si, 6
-    mov paperA2[si], ax
+
+        ;---------< Reset Value >-----------
+        xor ax, ax
+        mov discountCent, ax
+        mov si, 0
+        mov paperA4[si], ax
+        mov si, 2
+        mov paperA4[si], ax
+        mov si, 4
+        mov paperA4[si], ax
+        mov si, 6
+        mov paperA4[si], ax
+        mov si, 0
+        mov paperA3[si], ax
+        mov si, 2
+        mov paperA3[si], ax
+        mov si, 4
+        mov paperA3[si], ax
+        mov si, 6
+        mov paperA3[si], ax
+        mov si, 0
+        mov paperA2[si], ax
+        mov si, 2
+        mov paperA2[si], ax
+        mov si, 4
+        mov paperA2[si], ax
+        mov si, 6
+        mov paperA2[si], ax
     jmp ending
 
     nodiscount:
-    mov ax, salesPaper
-    cmp ax, 100
-    ja discount
+        mov ax, salesPaper
+        cmp ax, 100
+        ja discount
 
-    mov bx, subTotalRinggit
-    mov cx, subTotalCent
-    mov totalRinggit, bx
-    mov totalCent, cx
+        mov bx, subTotalRinggit
+        mov cx, subTotalCent
+        mov totalRinggit, bx
+        mov totalCent, cx
     jmp pays
     
     discount:
-    cmp ax, 200
-    jbe discountA
+        cmp ax, 200
+        jbe discountA
     jmp discountB
 
     discountA:
-    ; Discount A =  20% x subtotal
-    calcDiscount 2, discountRinggit, discountCent
-    calcDiscount 8, totalRinggit, totalCent
+        ; Discount A =  20% x subtotal
+        calcDiscount 2, discountRinggit, discountCent
+        calcDiscount 8, totalRinggit, totalCent
     jmp pays
 
     discountB:
-    calcDiscount 4, discountRinggit, discountCent
-    calcDiscount 6, totalRinggit, totalCent    
+        calcDiscount 4, discountRinggit, discountCent
+        calcDiscount 6, totalRinggit, totalCent    
     jmp pays
    
     ending:
@@ -795,27 +808,27 @@ calculate PROC
     mov si, 0
     mov di, 0
     cal:
-    calcPrice paperA4[si], priceA4[si]
-    add di, 2
-    add si, 2
+        calcPrice paperA4[si], priceA4[si]
+        add di, 2
+        add si, 2
     loop cal
 
     mov cx, 4
     mov di, 8
     mov si, 0
     cal2:
-    calcPrice paperA3[si], priceA3[si]
-    add si, 2
-    add di, 2
+        calcPrice paperA3[si], priceA3[si]
+        add si, 2
+        add di, 2
     loop cal2
 
     mov cx, 4
     mov di, 16
     mov si, 0
     cal3:
-    calcPrice paperA2[si], priceA2[si]
-    add di, 2
-    add si, 2
+        calcPrice paperA2[si], priceA2[si]
+        add di, 2
+        add si, 2
     loop cal3
     ret
 calculate ENDP
@@ -827,9 +840,9 @@ calcSubtotal PROC
     mov bx, subTotalRinggit
     mov ax, subTotalCent
     rm1:
-    add bx, ringgit[si]
-    add ax, cent[si]
-    add si, 2
+        add bx, ringgit[si]
+        add ax, cent[si]
+        add si, 2
     loop rm1
     mov subTotalRinggit, bx
     mov subTotalCent, ax
@@ -861,23 +874,23 @@ return PROC
     jb lend
 
     blance:
-    mov ax, cashRinggit
-    sub ax, totalRinggit
-    mov changeRinggit, ax
+        mov ax, cashRinggit
+        sub ax, totalRinggit
+        mov changeRinggit, ax
 
-    mov ax, cashCent
-    sub ax, totalCent
-    mov changeCent, ax
+        mov ax, cashCent
+        sub ax, totalCent
+        mov changeCent, ax
     ret
 
     lend:
-    mov ax, cashRinggit
-    sub ax, 1
-    mov cashRinggit, ax
+        mov ax, cashRinggit
+        sub ax, 1
+        mov cashRinggit, ax
 
-    mov ax, cashCent
-    add ax, 1000
-    mov cashCent, ax
+        mov ax, cashCent
+        add ax, 1000
+        mov cashCent, ax
     jmp blance
     ret
 return ENDP
