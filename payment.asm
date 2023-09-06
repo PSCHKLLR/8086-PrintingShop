@@ -12,7 +12,7 @@ paperA4 dw 4 dup (?)
 paperA3 dw 4 dup (?) 
 paperA2 dw 4 dup (?) 
 
-;--------------< Daily No. of paper each service >----------------
+;------------< Daily No. of paper each service >--------------
 dailyA4 dw 4 dup (?) 
 dailyA3 dw 4 dup (?)
 dailyA2 dw 4 dup (?)
@@ -46,10 +46,10 @@ tenthousand dw 10000
 thousand dw 1000
 hundred db 100
 ten db 10
-
 ; -------------< String Variable >------------------
 rm db "RM $"
 name1 db "PrintCrafters Printing Shop$"
+thanks db "Thanks For Using Our Service!$"
 printing db "Printing$"
 photo db "Photocopy$"
 bw db "Black & White $"
@@ -65,42 +65,42 @@ totalStr db "Total    : $"
 changeStr db "Change   : $"
 cashStr db "Cash     : $"
 line db "======================================================$"
+;---------< Spacing tool >---------------
 space db 9,9,9,32,32,'$'
 bigspace db 9,9,9,9,32,32,'$'
 tripleTab db 9,9,32,32,'$'
 doubleTab db 9,32,32,'$'
+tripleSpace db 32,32,32,'$'
 ;-------------- < MACRO >----------------
-
+;-------------< Print String >----------
 print macro str
     mov ah, 09h
     lea dx, str
     int 21h
 endm
 
+;-------------< Print Character >----------
 putc macro char
     mov dl, char
     mov ah, 02h
     int 21h
 endm
 
+;------------< Character Input >----------
 charIn macro char
     mov ah, 01h
     int 21h
     mov char, al
 endm
 
+;-------------< String Input >----------
 input macro str
     mov ah, 0ah
     lea dx, str
     int 21h
 endm
 
-scan macro str
-    mov ah, 0ah
-    lea dx, str
-    int 21h
-endm
-
+;-------------< Print No. Of Paper >----------
 paperNo macro paper
     mov ax, paper
     mov dx, 0
@@ -140,6 +140,7 @@ paperNo macro paper
     putc bl
 endm
 
+;-------------< Calculate Price >----------
 calcPrice macro paper, price
     mov ax, paper
     mov bx, price
@@ -151,6 +152,7 @@ calcPrice macro paper, price
     mov cent[di], dx
 endm
 
+;-------------< Print Price >----------
 printRM macro ringgit, cent
     print rm
     mov ax, ringgit
@@ -211,6 +213,7 @@ printRM macro ringgit, cent
     putc bl ;third
 endm
 
+;-------------< Calculate Total No. Of Paper >----------
 totalPaper macro total, a4, a3, A2
     mov ax, total
     mov cx, 4
@@ -224,6 +227,7 @@ totalPaper macro total, a4, a3, A2
     mov total, ax
 endm
 
+;-------------< Calculate Discount >----------
 calcDiscount MACRO rate, ringgit, cent
     mov ax, subTotalRinggit
     mov dx, 0
@@ -265,31 +269,33 @@ main proc
 
 
     ;---------- < Test Only >-------------
-    mov ax, 3
+    mov ax, 0
+    mov bx, 0
+    mov cx, 10
     mov si, 0
     mov paperA4[si], ax
     mov si, 2
-    mov paperA4[si], ax
+    mov paperA4[si], bx
     mov si, 4
-    mov paperA4[si], ax
+    mov paperA4[si], cx
     mov si, 6
-    mov paperA4[si], ax
+    mov paperA4[si], cx
     mov si, 0
     mov paperA3[si], ax
     mov si, 2
     mov paperA3[si], ax
     mov si, 4
-    mov paperA3[si], ax
+    mov paperA3[si], bx
     mov si, 6
     mov paperA3[si], ax
     mov si, 0
-    mov paperA2[si], ax
+    mov paperA2[si], bx
     mov si, 2
     mov paperA2[si], ax
     mov si, 4
-    mov paperA2[si], ax
+    mov paperA2[si], bx
     mov si, 6
-    mov paperA2[si], ax
+    mov paperA2[si], cx
 
     ;------------------< Price Calculation >-------------------
     call calculate
@@ -398,8 +404,9 @@ main proc
 
     reciept:
     call cls
-        putc 9
-        putc 9
+        print doubleTab
+        print tripleSpace
+        putc 32
         print name1
         putc 10
         print line
@@ -690,6 +697,10 @@ main proc
         printRM changeRinggit, changeCent
         putc 10
         print line
+        putc 10
+        print doubleTab
+        print tripleSpace
+        print thanks
 
         mov cx, 4
         mov si, 0
@@ -804,7 +815,7 @@ clear proc
     ret
 clear endp
 
-;---< Calculate all >----------
+;-----------< Calculate all >----------
 calculate PROC
     mov cx, 4
     mov si, 0
@@ -835,7 +846,7 @@ calculate PROC
     ret
 calculate ENDP
 
-; Calculate Subtotal
+;-------------< Calculate Subtotal >----------
 calcSubtotal PROC
     mov cx, 12
     mov si, 0
@@ -862,14 +873,14 @@ calcSubtotal PROC
     ret
 calcSubtotal ENDP
 
-; Clear Screen
+;-------------< Clear Screen >----------
 cls PROC
     mov ax, 0007h
     int 10h
     ret
 cls ENDP
 
-;description
+;-------------< Calculate Balance >----------
 return PROC
     mov ax, cashCent
     cmp ax, totalCent
