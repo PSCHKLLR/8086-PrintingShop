@@ -263,10 +263,9 @@ main proc
     mov ax, @data
     mov ds, ax
 
-    call cls
 
     ;---------- < Test Only >-------------
-    mov ax, 5450
+    mov ax, 3
     mov si, 0
     mov paperA4[si], ax
     mov si, 2
@@ -315,7 +314,7 @@ main proc
 
             cmp al, 13
             jne firstR
-            jmp balance
+            jmp validateRinggit
 
         firstR:
             cmp di, 0
@@ -358,7 +357,7 @@ main proc
             mov al, pay[si]
             cmp al, 13
             jne firstC
-        jmp balance
+        jmp validateRinggit
 
         firstC:
             cmp di, 0
@@ -398,6 +397,7 @@ main proc
         jmp lower
 
     reciept:
+    call cls
         putc 9
         putc 9
         print name1
@@ -666,10 +666,12 @@ main proc
         print bigspace
         print rm
         input pay
-        jmp parseInt
+    jmp parseInt
+
+    validateRinggit:
         mov ax, cashRinggit
         cmp ax, totalRinggit
-        jmp validateCent
+        je validateCent
         ja balance
     jmp reciept
 
@@ -695,7 +697,7 @@ main proc
             mov ax, dailyA4[si]
             add ax, paperA4[si]
             mov dailyA4[si], ax
-            add ax, 2
+            add si, 2
         loop calcdailyA4
 
         mov cx, 4
@@ -704,7 +706,7 @@ main proc
             mov ax, dailyA3[si]
             add ax, paperA3[si]
             mov dailyA3[si], ax
-            add ax, 2
+            add si, 2
         loop calcdailyA3
 
         mov cx, 4
@@ -713,7 +715,7 @@ main proc
             mov ax, dailyA2[si]
             add ax, paperA2[si]
             mov dailyA2[si], ax
-            add ax, 2
+            add si, 2
         loop calcdailyA2
 
         mov ax, dailyDiscountRinggit
