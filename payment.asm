@@ -71,6 +71,7 @@ bigspace db 9,9,9,9,32,32,'$'
 tripleTab db 9,9,32,32,'$'
 doubleTab db 9,32,32,'$'
 tripleSpace db 32,32,32,'$'
+
 ;-------------- < MACRO >----------------
 ;-------------< Print String >----------
 print macro str
@@ -267,11 +268,10 @@ main proc
     mov ax, @data
     mov ds, ax
 
-
     ;---------- < Test Only >-------------
-    mov ax, 0
+    mov ax, 1
     mov bx, 0
-    mov cx, 10
+    mov cx, 5
     mov si, 0
     mov paperA4[si], ax
     mov si, 2
@@ -307,8 +307,182 @@ main proc
     totalPaper salesPaper, paperA2, paperA3, paperA4
 
     ;-----------------< Print Reciept >----------------
-    jmp reciept
-    parseInt:
+    reciept:
+    call printItem
+    call discOpt
+
+    pays:
+    ;Total = subtotal - discount
+        putc 10
+        print discountStr
+        putc 9
+        putc 9
+        mov ax, salesPaper
+        cmp ax, 100
+        ja disSTR
+    jmp cont
+    
+    disSTR:
+        cmp ax, 200
+        jbe Astr
+        jmp Bstr
+
+    Astr:
+        print discA 
+    jmp cont
+
+    Bstr:
+        print discB   
+    jmp cont
+
+    cont:
+        print tripleTab
+        printRM discountRinggit, discountCent
+        putc 10
+        print line
+        putc 10
+        print totalStr
+        putc 9
+        putc 9
+        paperNo salesPaper
+        print tripleTab
+        printRM totalRinggit, totalCent
+        putc 10
+        print cashStr
+        print bigspace
+        print rm
+        input pay
+    call isdigit
+    call parseInt
+    call validateAmount
+
+    balance:
+        putc 10
+        print changeStr
+        print bigspace
+        ;printRM cashRinggit, cashCent
+        call return
+        printRM changeRinggit, changeCent
+        putc 10
+        print line
+        putc 10
+        print doubleTab
+        print tripleSpace
+        print thanks
+        call dailySum
+        ;---------< Reset Value >-----------
+        call resetSales
+   
+    mov ax, 4c00h
+    int 21h
+main endp
+
+;----------< Clear >------------
+clear proc
+    xor ax, ax    ; Clear AX register
+    xor bx, bx    ; Clear BX register
+    xor cx, cx    ; Clear CX register
+    xor dx, dx    ; Clear DX register
+    xor si, si    ; Clear SI register
+    xor di, di    ; Clear DI register
+    ret
+clear endp
+
+;-----------< Calculate all >----------
+calculate PROC
+    mov cx, 4
+    mov si, 0
+    mov di, 0
+    cal:
+        calcPrice paperA4[si], priceA4[si]
+        add di, 2
+        add si, 2
+    loop cal
+
+    mov cx, 4
+    mov di, 8
+    mov si, 0
+    cal2:
+        calcPrice paperA3[si], priceA3[si]
+        add si, 2
+        add di, 2
+    loop cal2
+
+    mov cx, 4
+    mov di, 16
+    mov si, 0
+    cal3:
+        calcPrice paperA2[si], priceA2[si]
+        add di, 2
+        add si, 2
+    loop cal3
+    ret
+calculate ENDP
+
+;-------------< Calculate Subtotal >----------
+calcSubtotal PROC
+    mov cx, 12
+    mov si, 0
+    mov bx, subTotalRinggit
+    mov ax, subTotalCent
+    rm1:
+        add bx, ringgit[si]
+        add ax, cent[si]
+        add si, 2
+    loop rm1
+    mov subTotalRinggit, bx
+    mov subTotalCent, ax
+
+    mov ax, subTotalCent
+    mov bx, 1
+    mul bx
+    mov bx, thousand
+    div bx
+    mov subTotalCent, dx
+    mov bx, ax
+    mov ax, subTotalRinggit
+    add ax, bx
+    mov subTotalRinggit, ax
+    ret
+calcSubtotal ENDP
+
+;-------------< Clear Screen >----------
+cls PROC
+    mov ax, 0007h
+    int 10h
+    ret
+cls ENDP
+
+;-------------< Calculate Balance >----------
+return PROC
+    mov ax, cashCent
+    cmp ax, totalCent
+    jb lend
+
+    blance:
+        mov ax, cashRinggit
+        sub ax, totalRinggit
+        mov changeRinggit, ax
+
+        mov ax, cashCent
+        sub ax, totalCent
+        mov changeCent, ax
+    ret
+
+    lend:
+        mov ax, cashRinggit
+        sub ax, 1
+        mov cashRinggit, ax
+
+        mov ax, cashCent
+        add ax, 1000
+        mov cashCent, ax
+    jmp blance
+    ret
+return ENDP
+
+;------< Parse to Int >---------
+parseInt PROC
         xor ax, ax
         xor cx, cx
         mov si, 2
@@ -320,7 +494,7 @@ main proc
 
             cmp al, 13
             jne firstR
-            jmp validateRinggit
+            ret
 
         firstR:
             cmp di, 0
@@ -363,7 +537,7 @@ main proc
             mov al, pay[si]
             cmp al, 13
             jne firstC
-        jmp validateRinggit
+        ret
 
         firstC:
             cmp di, 0
@@ -400,10 +574,117 @@ main proc
             mov cashCent, ax
             inc si
             inc di
-        jmp lower
+        jmp lower   
+parseInt ENDP
 
-    reciept:
-    call cls
+;------< Reset Sales Variable >-------
+resetSales PROC
+        xor ax, ax
+        mov discountCent, ax
+        mov si, 0
+        mov paperA4[si], ax
+        mov si, 2
+        mov paperA4[si], ax
+        mov si, 4
+        mov paperA4[si], ax
+        mov si, 6
+        mov paperA4[si], ax
+        mov si, 0
+        mov paperA3[si], ax
+        mov si, 2
+        mov paperA3[si], ax
+        mov si, 4
+        mov paperA3[si], ax
+        mov si, 6
+        mov paperA3[si], ax
+        mov si, 0
+        mov paperA2[si], ax
+        mov si, 2
+        mov paperA2[si], ax
+        mov si, 4
+        mov paperA2[si], ax
+        mov si, 6
+        mov paperA2[si], ax
+        ret    
+resetSales ENDP
+
+;-------< Discount Option >------
+discOpt PROC
+    mov ax, salesPaper
+    cmp ax, 100
+    ja discount
+
+    mov bx, subTotalRinggit
+    mov cx, subTotalCent
+    mov totalRinggit, bx
+    mov totalCent, cx
+    ret
+    
+    discount:
+        cmp ax, 200
+        jbe discountA
+    jmp discountB
+
+    discountA:
+        ; Discount A =  20% x subtotal
+        calcDiscount 2, discountRinggit, discountCent
+        calcDiscount 8, totalRinggit, totalCent
+    ret
+
+    discountB:
+        calcDiscount 4, discountRinggit, discountCent
+        calcDiscount 6, totalRinggit, totalCent    
+    ret
+discOpt ENDP
+
+;-----< Sum for Daily Report >------
+dailySum PROC
+    mov cx, 4
+        mov si, 0
+        calcdailyA4:
+            mov ax, dailyA4[si]
+            add ax, paperA4[si]
+            mov dailyA4[si], ax
+            add si, 2
+        loop calcdailyA4
+
+        mov cx, 4
+        mov si, 0
+        calcdailyA3:
+            mov ax, dailyA3[si]
+            add ax, paperA3[si]
+            mov dailyA3[si], ax
+            add si, 2
+        loop calcdailyA3
+
+        mov cx, 4
+        mov si, 0
+        calcdailyA2:
+            mov ax, dailyA2[si]
+            add ax, paperA2[si]
+            mov dailyA2[si], ax
+            add si, 2
+        loop calcdailyA2
+
+        mov ax, dailyDiscountRinggit
+        add ax, discountRinggit
+        mov dailyDiscountRinggit, ax
+
+        mov ax, dailyDiscountCent
+        add ax, discountCent
+        mov dx, 0
+        mov bx, 1000
+        div bx
+        mov dx, dailyDiscountCent
+        mov cx, dailyDiscountRinggit
+        add cx, ax
+        mov dailyDiscountRinggit, cx
+        ret   
+dailySum ENDP
+
+;-------< Print Item >---------
+printItem PROC
+call cls
         print doubleTab
         print tripleSpace
         putc 32
@@ -624,287 +905,63 @@ main proc
             printRM ringgit[si], cent[si]
             putc 10
 
-    done:
+        done:
         print line
         putc 10
         print subtotalStr
         print bigspace
         printRM subTotalRinggit, subTotalCent
-    jmp nodiscount
+        ret   
+printItem ENDP
 
-    pays:
-    ;Total = subtotal - discount
-        putc 10
-        print discountStr
-        putc 9
-        putc 9
-        mov ax, salesPaper
-        cmp ax, 100
-        ja disSTR
-    jmp cont
-    
-    disSTR:
-        cmp ax, 200
-        jbe Astr
-        jmp Bstr
-
-    Astr:
-        print discA 
-    jmp cont
-
-    Bstr:
-        print discB   
-    jmp cont
-
-    cont:
-        print tripleTab
-        printRM discountRinggit, discountCent
-        putc 10
-        print line
-        putc 10
-        print totalStr
-        putc 9
-        putc 9
-        paperNo salesPaper
-        print tripleTab
-        printRM totalRinggit, totalCent
-        putc 10
-        print cashStr
-        print bigspace
-        print rm
-        input pay
-    jmp parseInt
-
-    validateRinggit:
-        mov ax, cashRinggit
-        cmp ax, totalRinggit
-        je validateCent
-        ja balance
+;--------< Cash Amount Validation >-----------
+validateAmount PROC
+    mov ax, cashRinggit
+    cmp ax, totalRinggit
+    je validateCent
+    ja back
     jmp reciept
 
     validateCent:
         mov ax, cashCent
         cmp ax, totalCent
-        jae balance
+        jae back
     jmp reciept
 
-    balance:
-        putc 10
-        print changeStr
-        print bigspace
-        ;printRM cashRinggit, cashCent
-        call return
-        printRM changeRinggit, changeCent
-        putc 10
-        print line
-        putc 10
-        print doubleTab
-        print tripleSpace
-        print thanks
+    back: 
+        ret   
+validateAmount ENDP
 
-        mov cx, 4
-        mov si, 0
-        calcdailyA4:
-            mov ax, dailyA4[si]
-            add ax, paperA4[si]
-            mov dailyA4[si], ax
-            add si, 2
-        loop calcdailyA4
+;description
+isdigit PROC
+    mov si , 2
+    mov di , 0
 
-        mov cx, 4
-        mov si, 0
-        calcdailyA3:
-            mov ax, dailyA3[si]
-            add ax, paperA3[si]
-            mov dailyA3[si], ax
-            add si, 2
-        loop calcdailyA3
-
-        mov cx, 4
-        mov si, 0
-        calcdailyA2:
-            mov ax, dailyA2[si]
-            add ax, paperA2[si]
-            mov dailyA2[si], ax
-            add si, 2
-        loop calcdailyA2
-
-        mov ax, dailyDiscountRinggit
-        add ax, discountRinggit
-        mov dailyDiscountRinggit, ax
-
-        mov ax, dailyDiscountCent
-        add ax, discountCent
-        mov dx, 0
-        mov bx, 1000
-        div bx
-        mov dx, dailyDiscountCent
-        mov cx, dailyDiscountRinggit
-        add cx, ax
-        mov dailyDiscountRinggit, cx
-
-
-        ;---------< Reset Value >-----------
-        xor ax, ax
-        mov discountCent, ax
-        mov si, 0
-        mov paperA4[si], ax
-        mov si, 2
-        mov paperA4[si], ax
-        mov si, 4
-        mov paperA4[si], ax
-        mov si, 6
-        mov paperA4[si], ax
-        mov si, 0
-        mov paperA3[si], ax
-        mov si, 2
-        mov paperA3[si], ax
-        mov si, 4
-        mov paperA3[si], ax
-        mov si, 6
-        mov paperA3[si], ax
-        mov si, 0
-        mov paperA2[si], ax
-        mov si, 2
-        mov paperA2[si], ax
-        mov si, 4
-        mov paperA2[si], ax
-        mov si, 6
-        mov paperA2[si], ax
-    jmp ending
-
-    nodiscount:
-        mov ax, salesPaper
-        cmp ax, 100
-        ja discount
-
-        mov bx, subTotalRinggit
-        mov cx, subTotalCent
-        mov totalRinggit, bx
-        mov totalCent, cx
-    jmp pays
-    
-    discount:
-        cmp ax, 200
-        jbe discountA
-    jmp discountB
-
-    discountA:
-        ; Discount A =  20% x subtotal
-        calcDiscount 2, discountRinggit, discountCent
-        calcDiscount 8, totalRinggit, totalCent
-    jmp pays
-
-    discountB:
-        calcDiscount 4, discountRinggit, discountCent
-        calcDiscount 6, totalRinggit, totalCent    
-    jmp pays
-   
-    ending:
-    mov ax, 4c00h
-    int 21h
-main endp
-
-clear proc
-    xor ax, ax    ; Clear AX register
-    xor bx, bx    ; Clear BX register
-    xor cx, cx    ; Clear CX register
-    xor dx, dx    ; Clear DX register
-    xor si, si    ; Clear SI register
-    xor di, di    ; Clear DI register
-    ret
-clear endp
-
-;-----------< Calculate all >----------
-calculate PROC
-    mov cx, 4
-    mov si, 0
-    mov di, 0
-    cal:
-        calcPrice paperA4[si], priceA4[si]
-        add di, 2
-        add si, 2
-    loop cal
-
-    mov cx, 4
-    mov di, 8
-    mov si, 0
-    cal2:
-        calcPrice paperA3[si], priceA3[si]
-        add si, 2
-        add di, 2
-    loop cal2
-
-    mov cx, 4
-    mov di, 16
-    mov si, 0
-    cal3:
-        calcPrice paperA2[si], priceA2[si]
-        add di, 2
-        add si, 2
-    loop cal3
-    ret
-calculate ENDP
-
-;-------------< Calculate Subtotal >----------
-calcSubtotal PROC
-    mov cx, 12
-    mov si, 0
-    mov bx, subTotalRinggit
-    mov ax, subTotalCent
-    rm1:
-        add bx, ringgit[si]
-        add ax, cent[si]
-        add si, 2
-    loop rm1
-    mov subTotalRinggit, bx
-    mov subTotalCent, ax
-
-    mov ax, subTotalCent
-    mov bx, 1
-    mul bx
-    mov bx, thousand
-    div bx
-    mov subTotalCent, dx
-    mov bx, ax
-    mov ax, subTotalRinggit
-    add ax, bx
-    mov subTotalRinggit, ax
-    ret
-calcSubtotal ENDP
-
-;-------------< Clear Screen >----------
-cls PROC
-    mov ax, 0007h
-    int 10h
-    ret
-cls ENDP
-
-;-------------< Calculate Balance >----------
-return PROC
-    mov ax, cashCent
-    cmp ax, totalCent
-    jb lend
-
-    blance:
-        mov ax, cashRinggit
-        sub ax, totalRinggit
-        mov changeRinggit, ax
-
-        mov ax, cashCent
-        sub ax, totalCent
-        mov changeCent, ax
+    digit:
+    mov al, pay[si]
+    cmp al, 13
+    jne dotnot
     ret
 
-    lend:
-        mov ax, cashRinggit
-        sub ax, 1
-        mov cashRinggit, ax
+    dotnot:
+    cmp al, 2eh
+    je dot2
 
-        mov ax, cashCent
-        add ax, 1000
-        mov cashCent, ax
-    jmp blance
-    ret
-return ENDP
+    cmp al, 57
+    jb less
+    jmp reciept
+
+    less:
+    cmp al, 48
+    inc si
+    ja digit
+    jmp reciept
+
+    dot2:
+    inc si
+    inc di
+    cmp di, 1
+    jbe digit
+    jmp reciept   
+isdigit ENDP
 end main
